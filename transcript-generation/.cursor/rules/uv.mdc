@@ -1,8 +1,0 @@
----
-alwaysApply: true
-description: Use uv for Python package management and running scripts
----
-- Use `uv` for all Python dependency management and script execution.
-- Install packages: `uv add <package>`
-- Run scripts: `uv run python <script.py> [args]`
-- Avoid direct `pip`, `pipenv`, or `poetry` commands.
