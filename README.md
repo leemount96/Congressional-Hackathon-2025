@@ -118,7 +118,7 @@ Both Congressional staff and the public would benefit from rapid access to Congr
 * Generate succinct, useful and accurate summaries for the events;
 * Create an interface or way of presenting the transcripts and summaries to their intended audience (Congressional staff, the public, etc.)
 
-A JSON-formatted list of all Committee YouTube Channels can be found in this repo here: [Committee-YouTube-Channels.json](Committee-YouTube-Channels.json)
+A JSON-formatted list of all Committee YouTube Channels can be found in this repo here: [Committee-Youtube-Channels.json](https://github.com/LibraryOfCongress/Congressional-Hackathon-2025/blob/main/Committee-Youtube-Channels.json).
 
 ##### What some other countries are doing:
 * [Digitalization of the Hansard, beyond automatic transcriptions](https://events.bussola-tech.co/modernisation-of-hansard)
