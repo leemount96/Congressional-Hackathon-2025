@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "pnpm build",
+  "outputDirectory": ".next",
+  "crons": [{
+    "path": "/api/cron/sync-hearings",
+    "schedule": "0 6 * * *"
+  }]
+}
