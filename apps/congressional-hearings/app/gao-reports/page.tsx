@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { BookOpen, Calendar, FileText, TrendingUp, Search, Download, Loader2 } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 // Mock data for GAO reports - in a real app, this would come from an API
 const mockGAOReports = [
@@ -73,11 +73,40 @@ interface SearchResult {
   snippet: string;
 }
 
+interface GAOReport {
+  id: string;
+  title: string;
+  date: string;
+  filename: string;
+  metadata?: any;
+}
+
 export default function GAOReportsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [searchNote, setSearchNote] = useState("");
+  const [allReports, setAllReports] = useState<GAOReport[]>([]);
+  const [loadingReports, setLoadingReports] = useState(true);
+
+  useEffect(() => {
+    const fetchAllReports = async () => {
+      try {
+        const response = await fetch('/api/gao-reports');
+        if (response.ok) {
+          const data = await response.json();
+          setAllReports(data.reports || []);
+        }
+      } catch (error) {
+        console.error('Error fetching reports:', error);
+      } finally {
+        setLoadingReports(false);
+      }
+    };
+
+    fetchAllReports();
+  }, []);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -103,6 +132,7 @@ export default function GAOReportsPage() {
 
       const data = await response.json();
       setSearchResults(data.results || []);
+      setSearchNote(data.note || "");
     } catch (error) {
       console.error('Search error:', error);
       setSearchResults([]);
@@ -119,18 +149,24 @@ export default function GAOReportsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-balance">GAO Reports</h1>
-          <p className="text-muted-foreground mt-2">Browse and analyze Government Accountability Office reports and recommendations</p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Export Data
-          </Button>
-        </div>
-      </div>
+             <div className="flex items-center justify-between">
+               <div>
+                 <h1 className="text-3xl font-bold text-balance">GAO Reports</h1>
+                 <p className="text-muted-foreground mt-2">Browse and analyze Government Accountability Office reports and recommendations</p>
+               </div>
+               <div className="flex items-center space-x-2">
+                 <Button variant="outline" asChild>
+                   <a href="/gao_reports/" target="_blank" rel="noopener noreferrer">
+                     <FileText className="mr-2 h-4 w-4" />
+                     Browse Raw Files
+                   </a>
+                 </Button>
+                 <Button variant="outline">
+                   <Download className="mr-2 h-4 w-4" />
+                   Export Data
+                 </Button>
+               </div>
+             </div>
 
       {/* Semantic Search Section */}
       <Card>
@@ -182,6 +218,11 @@ export default function GAOReportsPage() {
             <CardTitle>Search Results</CardTitle>
             <CardDescription>
               Results for: "{searchQuery}"
+              {searchNote && (
+                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
+                  {searchNote}
+                </div>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -220,16 +261,20 @@ export default function GAOReportsPage() {
                     <p className="text-sm">{result.snippet}</p>
                   </div>
                   
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
-                      <FileText className="h-4 w-4 mr-1" />
-                      View Full Report
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Download className="h-4 w-4 mr-1" />
-                      Download
-                    </Button>
-                  </div>
+                         <div className="flex items-center gap-2">
+                           <Button variant="outline" size="sm" asChild>
+                             <a href={`/gao-reports/view/${result.report_id}`} target="_blank" rel="noopener noreferrer">
+                               <FileText className="h-4 w-4 mr-1" />
+                               View Full Report
+                             </a>
+                           </Button>
+                           <Button variant="outline" size="sm" asChild>
+                             <a href={`/gao_reports/${result.report_id.toLowerCase()}.md`} target="_blank" rel="noopener noreferrer">
+                               <Download className="h-4 w-4 mr-1" />
+                               View Raw MD
+                             </a>
+                           </Button>
+                         </div>
                 </div>
               ))
             ) : (
@@ -290,57 +335,65 @@ export default function GAOReportsPage() {
         </Card>
       </div>
 
-      {/* Recent Reports */}
+      {/* All Available Reports */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
-            Recent GAO Reports
+            Available GAO Reports
           </CardTitle>
-          <CardDescription>Latest published reports from the Government Accountability Office</CardDescription>
+          <CardDescription>
+            {loadingReports ? 'Loading reports...' : `${allReports.length} reports available`}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {mockGAOReports.map((report) => (
-            <div key={report.id} className="flex items-start justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-lg">{report.title}</h3>
-                  <Badge variant="secondary">{report.id}</Badge>
-                </div>
-                <p className="text-muted-foreground text-sm">{report.summary}</p>
-                <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {new Date(report.date).toLocaleDateString()}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <FileText className="h-3 w-3" />
-                    {report.pages} pages
-                  </span>
-                  <Badge variant="outline" className="text-xs">
-                    {report.status}
-                  </Badge>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {report.topics.map((topic) => (
-                    <Badge key={topic} variant="outline" className="text-xs">
-                      {topic}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 ml-4">
-                <Button variant="outline" size="sm">
-                  <FileText className="h-4 w-4 mr-1" />
-                  View
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-1" />
-                  Download
-                </Button>
-              </div>
+          {loadingReports ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin mr-2" />
+              <span className="text-muted-foreground">Loading reports...</span>
             </div>
-          ))}
+          ) : allReports.length > 0 ? (
+            allReports.map((report) => (
+              <div key={report.id} className="flex items-start justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-lg">{report.title}</h3>
+                    <Badge variant="secondary">{report.id}</Badge>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {new Date(report.date).toLocaleDateString()}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <FileText className="h-3 w-3" />
+                      {report.filename}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 ml-4">
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={`/gao-reports/view/${report.id}`} target="_blank" rel="noopener noreferrer">
+                      <FileText className="h-4 w-4 mr-1" />
+                      View
+                    </a>
+                  </Button>
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={`/gao_reports/${report.filename}`} target="_blank" rel="noopener noreferrer">
+                      <Download className="h-4 w-4 mr-1" />
+                      Raw MD
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No GAO reports found.</p>
+              <p className="text-sm">Make sure the gao_reports folder contains markdown files.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
