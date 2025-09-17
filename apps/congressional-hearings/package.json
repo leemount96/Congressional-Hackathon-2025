@@ -1,5 +1,5 @@
 {
-  "name": "my-v0-project",
+  "name": "congressional-hearings",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
+    "@pinecone-database/pinecone": "^6.1.2",
     "@radix-ui/react-accordion": "1.2.2",
     "@radix-ui/react-alert-dialog": "1.1.4",
     "@radix-ui/react-aspect-ratio": "1.1.1",
@@ -40,6 +41,7 @@
     "@radix-ui/react-toggle-group": "1.1.1",
     "@radix-ui/react-tooltip": "1.1.6",
     "@supabase/supabase-js": "^2.57.4",
+    "@types/pg": "^8.15.5",
     "@vercel/analytics": "latest",
     "autoprefixer": "^10.4.20",
     "axios": "^1.12.2",
@@ -55,7 +57,9 @@
     "lucide-react": "^0.454.0",
     "next": "14.2.16",
     "next-themes": "^0.4.6",
+    "openai": "^5.20.3",
     "pdf-parse": "^1.1.1",
+    "pg": "^8.16.3",
     "react": "^18",
     "react-day-picker": "9.8.0",
     "react-dom": "^18",
@@ -80,5 +84,5 @@
     "tw-animate-css": "1.3.3",
     "typescript": "^5"
   },
-  "packageManager": "pnpm@10.11.0+sha512.6540583f41cc5f628eb3d9773ecee802f4f9ef9923cc45b69890fb47991d4b092964694ec3a4f738a420c918a333062c8b925d312f42e4f0c263eb603551f977"
+  "packageManager": "pnpm@10.11.0"
 }

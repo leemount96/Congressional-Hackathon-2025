@@ -43,8 +43,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+# lib/  # Commented out - Next.js apps need lib folder
+# lib64/  # Commented out
 parts/
 sdist/
 var/
@@ -52,9 +52,84 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
+.tox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Virtual Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# Ruff
+.ruff_cache/
+
+# Package managers
+Pipfile.lock
+poetry.lock
+.pdm.toml
+.pdm-python
+.pdm-build/
+uv.lock
+
+# PEP 582
+__pypackages__/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# Flask/Django
+instance/
+.webassets-cache
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Scrapy
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# SageMath parsed files
+*.sage.py
+
+# celery beat schedule file
+celerybeat-schedule
+celerybeat.pid
 
 # Java
 *.class
