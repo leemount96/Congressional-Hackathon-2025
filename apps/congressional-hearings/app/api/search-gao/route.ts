@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     const index = pinecone.index('gao-reports'); // Assuming we'll create a separate index for GAO reports
     const searchResponse = await index.query({
       vector: queryEmbedding,
-      topK: limit,
+      topK: Math.max(limit, 5), // Ensure we get at least 5 results
       includeMetadata: true,
       includeValues: false,
     });
@@ -49,6 +49,50 @@ export async function POST(request: NextRequest) {
       topics: match.metadata?.topics as string[],
       snippet: extractSnippet(match.metadata?.content as string, query),
     })) || [];
+
+    // If no results found, return mock data for demonstration
+    if (results.length === 0) {
+      console.log('No results found in Pinecone, returning mock data for demonstration');
+      const mockResults = [
+        {
+          id: 'gao-25-107121_chunk_0',
+          score: 0.85,
+          content: 'DOD CYBERSPACE OPERATIONS: About 500 Organizations Have Roles, with Some Potential Overlap. The Department of Defense operates in cyberspace through a complex network of organizations with overlapping responsibilities.',
+          title: 'DOD CYBERSPACE OPERATIONS: About 500 Organizations Have Roles, with Some Potential Overlap',
+          report_id: 'GAO-25-107121',
+          date: '2025-09-15',
+          topics: ['Cybersecurity', 'Defense', 'National Security'],
+          snippet: 'DOD CYBERSPACE OPERATIONS: About 500 Organizations Have Roles, with Some Potential Overlap. The Department of Defense operates in cyberspace through a complex network of organizations...',
+        },
+        {
+          id: 'gao-25-106543_chunk_0',
+          score: 0.78,
+          content: 'Climate Change: Federal Actions Needed to Improve Resilience and Adaptation Planning. Federal agencies need to better coordinate their climate adaptation efforts.',
+          title: 'Climate Change: Federal Actions Needed to Improve Resilience and Adaptation Planning',
+          report_id: 'GAO-25-106543',
+          date: '2025-01-10',
+          topics: ['Climate Change', 'Resilience', 'Adaptation'],
+          snippet: 'Climate Change: Federal Actions Needed to Improve Resilience and Adaptation Planning. Federal agencies need to better coordinate their climate adaptation efforts...',
+        },
+        {
+          id: 'gao-25-105987_chunk_0',
+          score: 0.72,
+          content: 'Healthcare: Medicare Advantage Plans Need Better Oversight and Transparency. The Centers for Medicare & Medicaid Services should improve oversight of Medicare Advantage plans.',
+          title: 'Healthcare: Medicare Advantage Plans Need Better Oversight and Transparency',
+          report_id: 'GAO-25-105987',
+          date: '2025-01-05',
+          topics: ['Healthcare', 'Medicare', 'Oversight'],
+          snippet: 'Healthcare: Medicare Advantage Plans Need Better Oversight and Transparency. The Centers for Medicare & Medicaid Services should improve oversight...',
+        }
+      ];
+      
+      return NextResponse.json({
+        query,
+        results: mockResults,
+        totalResults: mockResults.length,
+        note: 'Mock data - GAO reports not yet uploaded to Pinecone. Run "npm run upsert-gao-reports" to upload real data.',
+      });
+    }
 
     return NextResponse.json({
       query,
