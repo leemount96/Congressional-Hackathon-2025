@@ -7,14 +7,18 @@
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start",
+    "upsert-pinecone": "tsx scripts/upsert-to-pinecone.ts",
+    "sync-hearings": "tsx scripts/sync-hearings.ts",
+    "sync-senate": "tsx scripts/sync-senate-hearings.ts",
+    "sync-all": "tsx scripts/sync-all-hearings.ts",
+    "generate-ai-summaries": "tsx scripts/generate-ai-summaries.ts",
+    "process-transcripts": "tsx scripts/process-transcripts-to-pinecone.ts",
+    "upsert-gao-reports": "tsx scripts/upsert-gao-reports-to-pinecone.ts",
     "convert-single-hearing": "tsx scripts/convert-single-hearing.ts",
     "convert-recent-hearings": "tsx scripts/convert-recent-hearings.ts",
     "import-gao-reports": "tsx scripts/import-gao-reports.ts",
     "update-gao-titles": "tsx scripts/update-gao-titles.ts",
-    "preview-gao-titles": "tsx scripts/update-gao-titles.ts preview",
-    "upsert-pinecone": "tsx scripts/upsert-to-pinecone.ts",
-    "process-transcripts": "tsx scripts/process-transcripts-to-pinecone.ts",
-    "upsert-gao-reports": "tsx scripts/upsert-gao-reports-to-pinecone.ts"
+    "preview-gao-titles": "tsx scripts/update-gao-titles.ts preview"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -62,7 +66,7 @@
     "gray-matter": "^4.0.3",
     "input-otp": "1.4.1",
     "lucide-react": "^0.454.0",
-    "next": "14.2.16",
+    "next": "14.2.32",
     "next-themes": "^0.4.6",
     "openai": "^5.20.3",
     "pdf-parse": "^1.1.1",
@@ -79,6 +83,7 @@
     "tailwindcss-animate": "^1.0.7",
     "tsx": "^4.20.5",
     "vaul": "^0.9.9",
+    "xml2js": "^0.6.2",
     "zod": "3.25.67"
   },
   "devDependencies": {

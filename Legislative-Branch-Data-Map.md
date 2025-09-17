@@ -165,6 +165,7 @@ This data map is a product of the [Congressional Data Task Force](https://usgpo.
 | [CISA DotGov data](https://flatgithub.com/cisagov/dotgov-data) | DotGov domains. Best for: Federal IT/security. | CSV | Rolling | CISA | Managed by DHS | Tech / Security |
 | [GAO Innovation Lab](https://innovations.gao.gov) | GAO Innovations. Best for: GAO projects. | Web | As needed | GAO |  | Oversight / GAO |
 | [Periodicially Listing Updates to Management (PLUM) Reporting](https://www.opm.gov/about-us/open-government/plum-reporting/) | List of senior positions in the executive branch. Best for: tracking filled and empty executive branch positions. | TXT, CSV | Annually | OPM |  | Nominations |
+| [Congressional District Shapefiles](https://www.census.gov/geographies/mapping-files/2023/geo/tiger-line-file.html) | Shapefiles from the Census Bureau | TIGER/Line Shapefiles |  | Census |  | District Maps |
 
 ## Unofficial / Civil Society
 
