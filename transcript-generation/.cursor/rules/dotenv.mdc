@@ -1,0 +1,12 @@
+---
+alwaysApply: true
+---
+# Environment Variables
+Use `python-dotenv` to load `.env` files for API keys and secrets.
+
+- **Install**: `uv add python-dotenv` (or `pip install python-dotenv`)
+- **Load early**:
+```python
+from dotenv import load_dotenv; load_dotenv()
+```
+- Access with `os.getenv("KEY")`; never hardcode secrets.
