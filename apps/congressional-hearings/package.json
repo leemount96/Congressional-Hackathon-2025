@@ -8,7 +8,10 @@
     "lint": "next lint",
     "start": "next start",
     "convert-single-hearing": "tsx scripts/convert-single-hearing.ts",
-    "convert-recent-hearings": "tsx scripts/convert-recent-hearings.ts"
+    "convert-recent-hearings": "tsx scripts/convert-recent-hearings.ts",
+    "import-gao-reports": "tsx scripts/import-gao-reports.ts",
+    "update-gao-titles": "tsx scripts/update-gao-titles.ts",
+    "preview-gao-titles": "tsx scripts/update-gao-titles.ts preview"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

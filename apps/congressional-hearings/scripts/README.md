@@ -27,26 +27,28 @@ pnpm install
 ### 4. Run Conversion
 
 ```bash
-# Convert 100 most recent hearings
-pnpm convert-recent-hearings
+# Congressional Hearings
+pnpm convert-recent-hearings        # Convert 100 most recent hearings
+pnpm convert-recent-hearings 50     # Convert specific number
+pnpm convert-single-hearing 123     # Convert single hearing by ID
+pnpm convert-single-hearing         # Convert first available hearing
 
-# Convert specific number of hearings
-pnpm convert-recent-hearings 50
-
-# Convert single hearing by ID
-pnpm convert-single-hearing 123
-
-# Convert first available hearing
-pnpm convert-single-hearing
+# GAO Reports  
+pnpm import-gao-reports             # Import all GAO reports from gao_reports folder
+pnpm preview-gao-titles             # Preview titles that will be extracted
+pnpm update-gao-titles              # Update titles for existing GAO reports
 ```
 
 ## 📁 Files Overview
 
 | File | Purpose |
 |------|---------|
-| `setup-database.sql` | Creates the markdown table in Supabase |
+| `setup-database.sql` | Creates the congressional_hearings_markdown table |
+| `setup-gao-table.sql` | Creates the gao_reports table |
 | `convert-recent-hearings.ts` | Batch converts multiple hearings |
 | `convert-single-hearing.ts` | Converts one hearing at a time |
+| `import-gao-reports.ts` | Imports GAO reports from markdown files |
+| `update-gao-titles.ts` | Updates titles for GAO reports |
 | `.env.local` | Your Supabase credentials (create this) |
 
 ## 🔄 How It Works
