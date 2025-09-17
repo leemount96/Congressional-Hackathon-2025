@@ -7,7 +7,11 @@
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start",
-    "upsert-pinecone": "tsx scripts/upsert-to-pinecone.ts"
+    "upsert-pinecone": "tsx scripts/upsert-to-pinecone.ts",
+    "sync-hearings": "tsx scripts/sync-hearings.ts",
+    "sync-senate": "tsx scripts/sync-senate-hearings.ts",
+    "sync-all": "tsx scripts/sync-all-hearings.ts",
+    "generate-ai-summaries": "tsx scripts/generate-ai-summaries.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -66,6 +70,7 @@
     "tailwindcss-animate": "^1.0.7",
     "tsx": "^4.20.5",
     "vaul": "^0.9.9",
+    "xml2js": "^0.6.2",
     "zod": "3.25.67"
   },
   "devDependencies": {
