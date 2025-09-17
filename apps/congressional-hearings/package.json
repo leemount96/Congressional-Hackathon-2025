@@ -11,7 +11,7 @@
     "convert-recent-hearings": "tsx scripts/convert-recent-hearings.ts",
     "import-gao-reports": "tsx scripts/import-gao-reports.ts",
     "update-gao-titles": "tsx scripts/update-gao-titles.ts",
-    "preview-gao-titles": "tsx scripts/update-gao-titles.ts preview"
+    "preview-gao-titles": "tsx scripts/update-gao-titles.ts preview",
     "upsert-pinecone": "tsx scripts/upsert-to-pinecone.ts",
     "process-transcripts": "tsx scripts/process-transcripts-to-pinecone.ts",
     "upsert-gao-reports": "tsx scripts/upsert-gao-reports-to-pinecone.ts"
