@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
 // Supabase configuration
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 // Try anon key first, fallback to service role key for development
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!
 

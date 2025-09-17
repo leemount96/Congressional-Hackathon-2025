@@ -10,6 +10,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Calendar, Users, FileText, ExternalLink, ArrowLeft, Download, Quote, LinkIcon, Info, AlertCircle } from "lucide-react"
 import Link from "next/link"
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { db, type CongressionalHearingMarkdown } from "@/lib/supabase"
 import { LabeledTranscriptViewer } from "@/components/labeled-transcript-viewer"
 import { TranscriptFilterPanel } from "@/components/transcript-filter-panel"
