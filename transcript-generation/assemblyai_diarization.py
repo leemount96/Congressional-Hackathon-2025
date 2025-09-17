@@ -19,18 +19,18 @@ def _ffmpeg_exists() -> bool:
     return shutil.which("ffmpeg") is not None
 
 
-def _extract_audio_segment(input_audio_path: Path, start_minutes: int, duration_minutes: int) -> Path:
+def _extract_audio_segment(input_audio_path: Path, start_minutes: int = 0, duration_minutes: Optional[int] = None) -> Path:
     """
     Create a temporary file containing audio from `start_minutes` to `start_minutes + duration_minutes`
-    from `input_audio_path`. Returns the path to the trimmed file.
+    from `input_audio_path`. If duration_minutes is None, processes the entire remaining audio.
+    Returns the path to the processed file.
     """
     if not _ffmpeg_exists():
-        raise RuntimeError("ffmpeg is required to trim audio but was not found in PATH.")
+        raise RuntimeError("ffmpeg is required to process audio but was not found in PATH.")
 
     start_seconds = max(0, start_minutes * 60)
-    duration_seconds = max(1, duration_minutes * 60)
-    temp_dir = Path(tempfile.mkdtemp(prefix="aai_trim_"))
-    trimmed_path = temp_dir / "audio_segment.mp3"
+    temp_dir = Path(tempfile.mkdtemp(prefix="aai_audio_"))
+    processed_path = temp_dir / "processed_audio.mp3"
 
     cmd = [
         "ffmpeg",
@@ -42,8 +42,14 @@ def _extract_audio_segment(input_audio_path: Path, start_minutes: int, duration_
         str(start_seconds),
         "-i",
         str(input_audio_path),
-        "-t",
-        str(duration_seconds),
+    ]
+    
+    # Add duration limit only if specified
+    if duration_minutes is not None:
+        duration_seconds = max(1, duration_minutes * 60)
+        cmd.extend(["-t", str(duration_seconds)])
+    
+    cmd.extend([
         "-vn",
         "-ac",
         "1",
@@ -55,12 +61,13 @@ def _extract_audio_segment(input_audio_path: Path, start_minutes: int, duration_
         "libmp3lame",
         "-b:a",
         "64k",
-        str(trimmed_path),
-    ]
+        str(processed_path),
+    ])
+    
     subprocess.run(cmd, check=True)
-    if not trimmed_path.exists():
-        raise RuntimeError("Failed to create trimmed audio segment")
-    return trimmed_path
+    if not processed_path.exists():
+        raise RuntimeError("Failed to create processed audio file")
+    return processed_path
 
 
 @dataclass
@@ -71,9 +78,15 @@ class SpeakerTurn:
     text: str
 
 
-def diarize_audio_segment(input_audio_path: str) -> List[SpeakerTurn]:
+def diarize_audio_file(input_audio_path: str, start_minutes: int = 0, duration_minutes: Optional[int] = None) -> List[SpeakerTurn]:
     """
-    Transcribe and speaker-diarize the first hour of a local audio file using AssemblyAI.
+    Transcribe and speaker-diarize an audio file using AssemblyAI.
+    
+    Args:
+        input_audio_path: Path to the audio file
+        start_minutes: Starting point in minutes (default: 0)
+        duration_minutes: Duration in minutes to process (default: None = entire file)
+    
     Requires ASSEMBLY_AI_API_KEY present in environment or .env.
     """
     api_key = os.environ.get("ASSEMBLY_AI_API_KEY")
@@ -82,6 +95,7 @@ def diarize_audio_segment(input_audio_path: str) -> List[SpeakerTurn]:
 
     try:
         import assemblyai as aai
+        from assemblyai.types import SpeakerOptions
     except Exception as exc:
         raise RuntimeError("assemblyai package not installed. Add it to your environment.") from exc
 
@@ -91,14 +105,18 @@ def diarize_audio_segment(input_audio_path: str) -> List[SpeakerTurn]:
     if not path.exists():
         raise FileNotFoundError(f"Audio file not found: {path}")
 
-    # Extract first 20 minutes
-    trimmed = _extract_audio_segment(path, start_minutes=0, duration_minutes=20)
+    # Process audio segment (or entire file if duration_minutes is None)
+    processed = _extract_audio_segment(path, start_minutes=start_minutes, duration_minutes=duration_minutes)
 
     # Enable diarization in config
     # Try best model for challenging audio
     config = aai.TranscriptionConfig(
         speech_model=aai.SpeechModel.best,  # Use best model instead of universal
         speaker_labels=True,
+        speaker_options=SpeakerOptions(
+            min_speakers_expected=10,
+            max_speakers_expected=20,
+        ),
         # Provide punctuate/formatting defaults
         punctuate=True,
         format_text=True,
@@ -107,7 +125,7 @@ def diarize_audio_segment(input_audio_path: str) -> List[SpeakerTurn]:
         filter_profanity=False,  # Don't filter anything
     )
 
-    transcript = aai.Transcriber(config=config).transcribe(str(trimmed))
+    transcript = aai.Transcriber(config=config).transcribe(str(processed))
 
     if transcript.status == "error":
         raise RuntimeError(f"Transcription failed: {transcript.error}")
@@ -185,12 +203,14 @@ def _format_ms(ms: int) -> str:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Speaker diarization using AssemblyAI (first 20 minutes)")
+    parser = argparse.ArgumentParser(description="Speaker diarization using AssemblyAI")
     parser.add_argument("--input", "-i", required=True, help="Path to local audio file (e.g., test.mp3)")
     parser.add_argument("--output", "-o", help="Path to output .txt file (prints to stdout if not provided)")
+    parser.add_argument("--start", "-s", type=int, default=0, help="Start time in minutes (default: 0)")
+    parser.add_argument("--duration", "-d", type=int, help="Duration in minutes (default: entire file)")
     args = parser.parse_args()
 
-    turns = diarize_audio_segment(args.input)
+    turns = diarize_audio_file(args.input, start_minutes=args.start, duration_minutes=args.duration)
     
     # Format the output
     lines = []
