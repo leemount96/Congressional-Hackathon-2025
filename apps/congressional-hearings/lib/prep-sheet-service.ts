@@ -473,10 +473,15 @@ Generate a comprehensive prep sheet in JSON format with ALL of the following fie
 }
 </output_specifications>`;
 
+    // Create an AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
+
     try {
       // Use GPT-5 Responses API format
       const response = await fetch('https://api.openai.com/v1/responses', {
         method: 'POST',
+        signal: controller.signal,
         headers: {
           'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
           'Content-Type': 'application/json',
@@ -492,6 +497,9 @@ Generate a comprehensive prep sheet in JSON format with ALL of the following fie
           }
         })
       });
+
+      // Clear the timeout since we got a response
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorBody = await response.text().catch(() => 'Unable to read error response');
@@ -526,6 +534,27 @@ Generate a comprehensive prep sheet in JSON format with ALL of the following fie
           const jsonMatch = jsonContent.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
             const parsed = JSON.parse(jsonMatch[0]);
+
+            // Preprocess the data to fix common validation issues
+            if (parsed.stakeholder_positions && Array.isArray(parsed.stakeholder_positions)) {
+              parsed.stakeholder_positions = parsed.stakeholder_positions.map((stakeholder: any) => {
+                // Normalize influence levels
+                if (stakeholder.influence_level) {
+                  const level = stakeholder.influence_level.toLowerCase()
+                  if (level.includes('very') || (level.includes('high') && !level.includes('medium'))) {
+                    stakeholder.influence_level = 'high'
+                  } else if (level.includes('medium')) {
+                    stakeholder.influence_level = 'medium'
+                  } else if (level.includes('low')) {
+                    stakeholder.influence_level = 'low'
+                  } else {
+                    stakeholder.influence_level = 'medium' // default to medium if unclear
+                  }
+                }
+                return stakeholder
+              })
+            }
+
             return PrepSheetSchema.parse(parsed);
           }
         } catch (parseError) {
@@ -535,7 +564,14 @@ Generate a comprehensive prep sheet in JSON format with ALL of the following fie
       }
 
       return null;
-    } catch (error) {
+    } catch (error: any) {
+      clearTimeout(timeoutId); // Make sure to clear timeout on error
+
+      if (error.name === 'AbortError') {
+        console.error('OpenAI API request timed out after 2 minutes');
+        throw new Error('Request timed out - the hearing may be too complex. Please try again.');
+      }
+
       console.error('Error generating prep sheet with OpenAI:', error);
       return null;
     }

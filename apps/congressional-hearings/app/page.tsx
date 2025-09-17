@@ -337,12 +337,6 @@ export default function UpcomingHearings() {
                       View Prep Sheet
                     </Link>
                   </Button>
-                  <Button asChild size="sm" variant="ghost">
-                    <Link href={`/historical/${hearing.id}/transcript`}>
-                      <FileText className="mr-2 h-4 w-4" />
-                      Details
-                    </Link>
-                  </Button>
                 </div>
 
               </CardContent>

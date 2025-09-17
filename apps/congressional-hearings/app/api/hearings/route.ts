@@ -4,6 +4,7 @@ import { Client } from 'pg';
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const chamber = searchParams.get('chamber');
+  const eventId = searchParams.get('event_id');
   const limit = searchParams.get('limit') || '20';
   const offset = searchParams.get('offset') || '0';
 
@@ -47,6 +48,12 @@ export async function GET(request: NextRequest) {
 
     const params: any[] = [];
     let paramIndex = 1;
+
+    if (eventId) {
+      query += ` AND event_id = $${paramIndex}`;
+      params.push(eventId);
+      paramIndex++;
+    }
 
     if (chamber) {
       query += ` AND LOWER(chamber) = LOWER($${paramIndex})`;
