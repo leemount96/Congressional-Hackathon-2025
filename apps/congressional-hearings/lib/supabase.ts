@@ -2,14 +2,19 @@ import { createClient } from '@supabase/supabase-js'
 
 // Supabase configuration
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+// Try anon key first, fallback to service role key for development
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing Supabase environment variables')
+  console.error('Required: NEXT_PUBLIC_SUPABASE_URL and either:')
+  console.error('- NEXT_PUBLIC_SUPABASE_ANON_KEY (for production)')
+  console.error('- SUPABASE_SERVICE_ROLE_KEY (for development)')
   throw new Error('Missing Supabase environment variables')
 }
 
 // Create a single supabase client for interacting with your database
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseKey)
 
 // Types for your congressional hearings data
 export interface CongressionalHearing {
@@ -24,6 +29,20 @@ export interface CongressionalHearing {
   related_docs?: number
   topics: string[]
   summary: string
+  created_at?: string
+  updated_at?: string
+}
+
+// Types for congressional hearings markdown data
+export interface CongressionalHearingMarkdown {
+  id: number
+  original_hearing_id: number
+  title: string
+  committee?: string
+  date: string
+  markdown_content: string
+  word_count: number
+  content_source: string
   created_at?: string
   updated_at?: string
 }
@@ -115,5 +134,75 @@ export const db = {
     
     if (error) throw error
     return data as CongressionalHearing
+  },
+
+  // Markdown hearings functions
+  // Get all markdown hearings
+  async getAllMarkdownHearings() {
+    const { data, error } = await supabase
+      .from('congressional_hearings_markdown')
+      .select('*')
+      .order('date', { ascending: false })
+    
+    if (error) throw error
+    return data as CongressionalHearingMarkdown[]
+  },
+
+  // Get markdown hearing by ID
+  async getMarkdownHearingById(id: number) {
+    const { data, error } = await supabase
+      .from('congressional_hearings_markdown')
+      .select('*')
+      .eq('id', id)
+      .single()
+    
+    if (error) throw error
+    return data as CongressionalHearingMarkdown
+  },
+
+  // Search markdown hearings
+  async searchMarkdownHearings(query: string) {
+    const { data, error } = await supabase
+      .from('congressional_hearings_markdown')
+      .select('*')
+      .or(`title.ilike.%${query}%,committee.ilike.%${query}%`)
+      .order('date', { ascending: false })
+    
+    if (error) throw error
+    return data as CongressionalHearingMarkdown[]
+  },
+
+  // Get markdown hearings by committee
+  async getMarkdownHearingsByCommittee(committee: string) {
+    const { data, error } = await supabase
+      .from('congressional_hearings_markdown')
+      .select('*')
+      .eq('committee', committee)
+      .order('date', { ascending: false })
+    
+    if (error) throw error
+    return data as CongressionalHearingMarkdown[]
+  }
+}
+
+// Helper function to transform markdown hearing data for the historical page
+export function transformMarkdownHearingForDisplay(hearing: CongressionalHearingMarkdown) {
+  return {
+    id: hearing.id,
+    title: hearing.title,
+    committee: hearing.committee || "Committee information not available",
+    date: hearing.date,
+    transcriptStatus: "available", // All markdown hearings have content
+    witnesses: ["Witness information not yet extracted"], // Placeholder
+    pages: Math.ceil(hearing.word_count / 250) || 1, // Estimate pages from word count
+    citations: 0, // Placeholder - to be extracted later
+    relatedDocs: 0, // Placeholder - to be extracted later  
+    topics: ["Topics to be extracted from content"], // Placeholder
+    summary: "Summary to be extracted from markdown content", // Placeholder
+    // Additional fields from our table
+    wordCount: hearing.word_count,
+    contentSource: hearing.content_source,
+    originalHearingId: hearing.original_hearing_id,
+    markdownContent: hearing.markdown_content, // For transcript viewer
   }
 }
