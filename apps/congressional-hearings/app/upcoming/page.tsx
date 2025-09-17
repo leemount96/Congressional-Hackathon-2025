@@ -329,6 +329,22 @@ export default function UpcomingHearings() {
                   </div>
                 )}
 
+                {/* Action Buttons */}
+                <div className="mt-4 pt-4 border-t flex gap-2">
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/prep-sheets/${hearing.event_id}`}>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      View Prep Sheet
+                    </Link>
+                  </Button>
+                  <Button asChild size="sm" variant="ghost">
+                    <Link href={`/historical/${hearing.id}/transcript`}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Details
+                    </Link>
+                  </Button>
+                </div>
+
               </CardContent>
             </Card>
           ))}

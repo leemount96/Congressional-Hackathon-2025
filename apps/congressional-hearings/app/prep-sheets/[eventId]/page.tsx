@@ -72,6 +72,8 @@ export default function PrepSheetView() {
   const [activeTab, setActiveTab] = useState("overview")
   const [gaoReports, setGaoReports] = useState<GAOReportResult[]>([])
   const [loadingGaoReports, setLoadingGaoReports] = useState(false)
+  const [generating, setGenerating] = useState(false)
+  const [notFound, setNotFound] = useState(false)
 
   useEffect(() => {
     if (params.eventId) {
@@ -87,13 +89,16 @@ export default function PrepSheetView() {
 
   const fetchPrepSheet = async (eventId: string) => {
     setLoading(true)
+    setNotFound(false)
     try {
       const response = await fetch(`/api/prep-sheets?event_id=${eventId}`)
       if (response.ok) {
         const data = await response.json()
         setPrepSheet(data.prepSheet)
+      } else if (response.status === 404) {
+        setNotFound(true)
       } else {
-        throw new Error('Prep sheet not found')
+        throw new Error('Failed to load prep sheet')
       }
     } catch (error) {
       console.error('Error fetching prep sheet:', error)
@@ -104,6 +109,61 @@ export default function PrepSheetView() {
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const generatePrepSheet = async () => {
+    setGenerating(true)
+
+    toast({
+      title: "Generating Prep Sheet",
+      description: "This may take 30-60 seconds...",
+    })
+
+    try {
+      // First get the hearing details
+      const hearingResponse = await fetch(`/api/hearings?event_id=${params.eventId}`)
+      if (!hearingResponse.ok) {
+        throw new Error('Hearing not found')
+      }
+      const hearingData = await hearingResponse.json()
+      const hearing = hearingData.hearings?.[0]
+
+      if (!hearing) {
+        throw new Error('Hearing not found')
+      }
+
+      // Generate the prep sheet
+      const response = await fetch('/api/prep-sheets/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hearingId: hearing.id,
+          eventId: params.eventId
+        })
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Prep sheet generated successfully!",
+        })
+
+        // Reload the prep sheet
+        await fetchPrepSheet(params.eventId as string)
+        setNotFound(false)
+      } else {
+        throw new Error('Failed to generate prep sheet')
+      }
+    } catch (error) {
+      console.error('Error generating prep sheet:', error)
+      toast({
+        title: "Error",
+        description: "Failed to generate prep sheet. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setGenerating(false)
     }
   }
 
@@ -179,16 +239,42 @@ export default function PrepSheetView() {
     )
   }
 
-  if (!prepSheet) {
+  if (generating) {
+    return (
+      <div className="container mx-auto p-8">
+        <Card>
+          <CardContent className="text-center py-12">
+            <Sparkles className="h-12 w-12 text-primary mx-auto mb-4 animate-pulse" />
+            <h3 className="text-lg font-medium mb-2">Generating Prep Sheet...</h3>
+            <p className="text-muted-foreground mb-4">
+              This may take 30-60 seconds as we analyze the hearing details and generate comprehensive briefing materials.
+            </p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (notFound && !prepSheet) {
     return (
       <div className="container mx-auto p-8">
         <Card>
           <CardContent className="text-center py-12">
             <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">Prep sheet not found</h3>
-            <Button asChild>
-              <Link href="/prep-sheets">Back to Prep Sheets</Link>
-            </Button>
+            <h3 className="text-lg font-medium mb-2">Prep sheet not available</h3>
+            <p className="text-muted-foreground mb-4">
+              A prep sheet hasn't been generated for this hearing yet.
+            </p>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={generatePrepSheet} disabled={generating}>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Generate Prep Sheet
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/prep-sheets">Back to Prep Sheets</Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

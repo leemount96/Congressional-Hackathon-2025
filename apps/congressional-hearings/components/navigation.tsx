@@ -8,14 +8,8 @@ import { Calendar, FileText, Search, Archive, Settings, BookOpen } from "lucide-
 
 const navigation = [
   {
-    name: "Dashboard",
-    href: "/",
-    icon: Calendar,
-    description: "Overview and upcoming hearings",
-  },
-  {
     name: "Upcoming Hearings",
-    href: "/upcoming",
+    href: "/",
     icon: Calendar,
     description: "Prepare for upcoming committee hearings",
   },
@@ -26,16 +20,10 @@ const navigation = [
     description: "Create and manage preparation documents",
   },
   {
-    name: "Historical Hearings",
+    name: "Hearing Transcripts",
     href: "/historical",
     icon: Archive,
     description: "Browse and analyze past hearings",
-  },
-  {
-    name: "Document Search",
-    href: "/search",
-    icon: Search,
-    description: "Search across all documents and transcripts",
   },
   {
     name: "GAO Reports",
