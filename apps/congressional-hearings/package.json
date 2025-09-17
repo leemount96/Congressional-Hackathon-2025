@@ -12,6 +12,8 @@
     "import-gao-reports": "tsx scripts/import-gao-reports.ts",
     "update-gao-titles": "tsx scripts/update-gao-titles.ts",
     "preview-gao-titles": "tsx scripts/update-gao-titles.ts preview"
+    "upsert-pinecone": "tsx scripts/upsert-to-pinecone.ts",
+    "process-transcripts": "tsx scripts/process-transcripts-to-pinecone.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -72,6 +74,7 @@
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
+    "tsx": "^4.20.5",
     "vaul": "^0.9.9",
     "zod": "3.25.67"
   },
