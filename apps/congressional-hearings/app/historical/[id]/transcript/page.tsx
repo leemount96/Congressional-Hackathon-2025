@@ -54,6 +54,40 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
     return text.replace(regex, '<mark class="bg-yellow-200">$1</mark>')
   }
 
+  // Helper function to detect if content is markdown
+  const isMarkdownContent = (content: string) => {
+    if (!content) return false
+    
+    // Check for common markdown patterns
+    const markdownPatterns = [
+      /^#+\s/, // Headers (# ## ###)
+      /\*\*.*\*\*/, // Bold text
+      /^\*\s/, // Unordered lists
+      /^\d+\.\s/, // Ordered lists
+      /^\>\s/, // Blockquotes
+      /```/, // Code blocks
+      /\[.*\]\(.*\)/, // Links
+      /^\|.*\|/, // Tables
+      /^---+$/, // Horizontal rules
+    ]
+    
+    // Split into lines and check for markdown patterns
+    const lines = content.split('\n').slice(0, 20) // Check first 20 lines
+    let markdownScore = 0
+    
+    for (const line of lines) {
+      for (const pattern of markdownPatterns) {
+        if (pattern.test(line.trim())) {
+          markdownScore++
+          break
+        }
+      }
+    }
+    
+    // If more than 20% of lines have markdown patterns, consider it markdown
+    return markdownScore > lines.length * 0.2
+  }
+
   // Parse labeled transcript into segments
   const segments = useMemo(() => {
     if (!hearing?.markdown_content || hearing.content_source !== 'labeled_transcript') return []
@@ -276,6 +310,7 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
             </CardHeader>
             <CardContent>
               {hearing.content_source === 'labeled_transcript' ? (
+                // Labeled transcript with speaker parsing
                 <ScrollArea className="h-[600px]">
                   <LabeledTranscriptViewer
                     content={hearing.markdown_content || ""}
@@ -284,10 +319,61 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
                     selectedSpeaker={selectedSpeaker}
                   />
                 </ScrollArea>
+              ) : isMarkdownContent(hearing.markdown_content || "") ? (
+                // Markdown content (from PDFs, govinfo, etc.)
+                <ScrollArea className="h-[600px]">
+                  <div className="prose prose-sm max-w-none markdown-content">
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        // Custom styling for markdown elements
+                        h1: ({ children }) => <h1 className="text-2xl font-bold mb-4 text-primary border-b border-border pb-2">{children}</h1>,
+                        h2: ({ children }) => <h2 className="text-xl font-semibold mb-3 mt-6 text-primary">{children}</h2>,
+                        h3: ({ children }) => <h3 className="text-lg font-medium mb-2 mt-4">{children}</h3>,
+                        p: ({ children }) => <p className="mb-3 leading-relaxed">{children}</p>,
+                        strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+                        ul: ({ children }) => <ul className="list-disc ml-6 mb-3 space-y-1">{children}</ul>,
+                        ol: ({ children }) => <ol className="list-decimal ml-6 mb-3 space-y-1">{children}</ol>,
+                        li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                        blockquote: ({ children }) => (
+                          <blockquote className="border-l-4 border-primary/30 pl-4 italic my-4 text-muted-foreground bg-muted/30 py-2">
+                            {children}
+                          </blockquote>
+                        ),
+                        code: ({ children }) => (
+                          <code className="bg-muted px-1 py-0.5 rounded text-sm font-mono">{children}</code>
+                        ),
+                        pre: ({ children }) => (
+                          <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm font-mono mb-4">
+                            {children}
+                          </pre>
+                        ),
+                        table: ({ children }) => (
+                          <table className="w-full border-collapse border border-border mb-4">
+                            {children}
+                          </table>
+                        ),
+                        th: ({ children }) => (
+                          <th className="border border-border bg-muted px-3 py-2 text-left font-medium">
+                            {children}
+                          </th>
+                        ),
+                        td: ({ children }) => (
+                          <td className="border border-border px-3 py-2">
+                            {children}
+                          </td>
+                        ),
+                      }}
+                    >
+                      {hearing.markdown_content || "No transcript content available"}
+                    </ReactMarkdown>
+                  </div>
+                </ScrollArea>
               ) : (
+                // Plain text content
                 <ScrollArea className="h-96">
                   <div
-                    className="prose prose-sm max-w-none whitespace-pre-line"
+                    className="prose prose-sm max-w-none whitespace-pre-line font-mono text-sm"
                     dangerouslySetInnerHTML={{
                       __html: highlightSearchTerm(hearing.markdown_content || "No transcript content available", searchTerm),
                     }}
