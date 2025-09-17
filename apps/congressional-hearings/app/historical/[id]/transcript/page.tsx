@@ -1,76 +1,46 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Calendar, Users, FileText, ExternalLink, ArrowLeft, Download, Quote, LinkIcon } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Calendar, Users, FileText, ExternalLink, ArrowLeft, Download, Quote, LinkIcon, Info, AlertCircle } from "lucide-react"
 import Link from "next/link"
+import { db, type CongressionalHearingMarkdown } from "@/lib/supabase"
 
-// Mock transcript data
-const transcriptData = {
-  id: 1,
-  title: "Social Media Platform Accountability",
-  committee: "House Committee on Energy and Commerce",
-  date: "2023-12-15",
-  witnesses: ["Mark Zuckerberg", "Elon Musk", "Linda Yaccarino"],
-  pages: 247,
-  citations: [
-    {
-      id: 1,
-      text: "According to the 2023 Pew Research study on social media usage...",
-      source: "Pew Research Center",
-      page: 23,
-      speaker: "Rep. Johnson",
-      linkedDoc: "pew-social-media-2023.pdf",
-    },
-    {
-      id: 2,
-      text: "The GAO report from last year clearly states that platform oversight...",
-      source: "GAO Report GAO-23-105",
-      page: 45,
-      speaker: "Rep. Smith",
-      linkedDoc: "gao-23-105.pdf",
-    },
-    {
-      id: 3,
-      text: "As outlined in the CRS report on Section 230...",
-      source: "CRS Report R46751",
-      page: 78,
-      speaker: "Mr. Zuckerberg",
-      linkedDoc: "crs-r46751.pdf",
-    },
-  ],
-  transcript: `
-CHAIRMAN JOHNSON: The committee will come to order. Today we examine the accountability of social media platforms and their impact on American society.
-
-Mr. Zuckerberg, thank you for appearing before the committee today. Let me start with a direct question about content moderation policies.
-
-MR. ZUCKERBERG: Thank you, Chairman Johnson. I appreciate the opportunity to discuss these important issues with the committee.
-
-CHAIRMAN JOHNSON: According to the 2023 Pew Research study on social media usage, 72% of Americans get their news from social media platforms. How do you ensure the accuracy of information on your platform?
-
-MR. ZUCKERBERG: We have invested heavily in fact-checking partnerships and AI systems to identify and reduce the spread of misinformation. We work with over 80 independent fact-checking organizations globally.
-
-REP. SMITH: Mr. Zuckerberg, the GAO report from last year clearly states that platform oversight mechanisms are insufficient. What specific steps are you taking to address these concerns?
-
-MR. ZUCKERBERG: We've implemented several new measures, including enhanced transparency reports and improved appeals processes. As outlined in the CRS report on Section 230, we believe in balanced approaches that protect both free speech and user safety.
-
-REP. MARTINEZ: Mr. Musk, your acquisition of Twitter has led to significant changes in content moderation. Can you explain your philosophy?
-
-MR. MUSK: Our approach is based on maximizing free speech within the bounds of the law. We've reduced content restrictions while maintaining policies against illegal content.
-
-REP. DAVIS: Ms. Yaccarino, how does your platform handle misinformation during election periods?
-
-MS. YACCARINO: We have specialized teams that work around the clock during election periods, partnering with election officials and implementing additional verification measures for election-related content.
-  `,
+// This will be populated from the database
+const mockTranscriptData = {
+  citations: [], // Placeholder for future citation extraction
 }
 
 export default function TranscriptView({ params }: { params: { id: string } }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCitation, setSelectedCitation] = useState<number | null>(null)
+  const [hearing, setHearing] = useState<CongressionalHearingMarkdown | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Load hearing data from database
+  useEffect(() => {
+    async function loadHearing() {
+      try {
+        setLoading(true)
+        setError(null)
+        const hearingData = await db.getMarkdownHearingById(parseInt(params.id))
+        setHearing(hearingData)
+      } catch (err) {
+        console.error('Error loading hearing:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load hearing')
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadHearing()
+  }, [params.id])
 
   const highlightSearchTerm = (text: string, term: string) => {
     if (!term) return text
@@ -78,12 +48,95 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
     return text.replace(regex, '<mark class="bg-yellow-200">$1</mark>')
   }
 
-  const filteredCitations = transcriptData.citations.filter(
-    (citation) =>
+  const filteredCitations = mockTranscriptData.citations.filter(
+    (citation: any) =>
       citation.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
       citation.source.toLowerCase().includes(searchTerm.toLowerCase()) ||
       citation.speaker.toLowerCase().includes(searchTerm.toLowerCase()),
   )
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/historical">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Historical Hearings
+            </Link>
+          </Button>
+          <div>
+            <Skeleton className="h-8 w-96 mb-2" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+        </div>
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-48" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-96 w-full" />
+              </CardContent>
+            </Card>
+          </div>
+          <div>
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-32" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-64 w-full" />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/historical">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Historical Hearings
+            </Link>
+          </Button>
+        </div>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Error loading hearing: {error}
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
+
+  if (!hearing) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/historical">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Historical Hearings
+            </Link>
+          </Button>
+        </div>
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            Hearing not found. It may not have been converted to markdown yet.
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -95,30 +148,38 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-balance">{transcriptData.title}</h1>
+          <h1 className="text-3xl font-bold text-balance">{hearing.title}</h1>
           <p className="text-muted-foreground mt-2">Transcript and Citation Analysis</p>
         </div>
       </div>
+
+      {/* Data source info */}
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          Showing real hearing content from your database. Citations and detailed analysis features are placeholders and will be enhanced in future updates.
+        </AlertDescription>
+      </Alert>
 
       {/* Header Info */}
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between">
             <div>
-              <CardTitle className="text-xl">{transcriptData.committee}</CardTitle>
+              <CardTitle className="text-xl">{hearing.committee || "Committee information not available"}</CardTitle>
               <CardDescription className="mt-2">
                 <div className="flex items-center gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
-                    {new Date(transcriptData.date).toLocaleDateString()}
+                    {new Date(hearing.date).toLocaleDateString()}
                   </div>
                   <div className="flex items-center gap-2">
                     <FileText className="h-4 w-4" />
-                    {transcriptData.pages} pages
+                    {hearing.word_count?.toLocaleString() || 0} words
                   </div>
                   <div className="flex items-center gap-2">
                     <ExternalLink className="h-4 w-4" />
-                    {transcriptData.citations.length} citations
+                    0 citations (placeholder)
                   </div>
                 </div>
               </CardDescription>
@@ -139,12 +200,10 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
           <div>
             <h4 className="text-sm font-medium mb-2">Witnesses:</h4>
             <div className="flex flex-wrap gap-2">
-              {transcriptData.witnesses.map((witness, index) => (
-                <Badge key={index} variant="secondary">
-                  <Users className="mr-1 h-3 w-3" />
-                  {witness}
-                </Badge>
-              ))}
+              <Badge variant="secondary">
+                <Users className="mr-1 h-3 w-3" />
+                Witnesses to be extracted (placeholder)
+              </Badge>
             </div>
           </div>
         </CardContent>
@@ -172,37 +231,20 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
 
                 <ScrollArea className="h-96">
                   <div className="space-y-3">
-                    {filteredCitations.map((citation) => (
-                      <div
-                        key={citation.id}
-                        className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                          selectedCitation === citation.id
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/50"
-                        }`}
-                        onClick={() => setSelectedCitation(citation.id)}
-                      >
-                        <div className="space-y-2">
-                          <div className="flex items-start justify-between">
-                            <Badge variant="outline" className="text-xs">
-                              Page {citation.page}
-                            </Badge>
-                            <Badge variant="secondary" className="text-xs">
-                              {citation.speaker}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground line-clamp-2">{citation.text}</p>
-                          <div className="flex items-center gap-2">
-                            <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-xs font-medium">{citation.source}</span>
-                          </div>
-                          <Button variant="ghost" size="sm" className="w-full text-xs">
-                            <FileText className="mr-1 h-3 w-3" />
-                            View Document
-                          </Button>
-                        </div>
+                    <div className="p-3 border rounded-lg border-dashed">
+                      <div className="text-center space-y-2">
+                        <Quote className="h-8 w-8 text-muted-foreground mx-auto" />
+                        <p className="text-sm text-muted-foreground">
+                          Citation extraction coming soon
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          We'll automatically identify and link citations from the full transcript content
+                        </p>
+                        <Badge variant="outline" className="text-xs">
+                          Feature in development
+                        </Badge>
                       </div>
-                    ))}
+                    </div>
                   </div>
                 </ScrollArea>
               </div>
@@ -225,7 +267,8 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="max-w-sm"
                 />
-                <Badge variant="outline">{transcriptData.pages} pages</Badge>
+                <Badge variant="outline">{hearing.word_count?.toLocaleString() || 0} words</Badge>
+                <Badge variant="outline">Source: {hearing.content_source}</Badge>
               </div>
             </CardHeader>
             <CardContent>
@@ -233,7 +276,7 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
                 <div
                   className="prose prose-sm max-w-none whitespace-pre-line"
                   dangerouslySetInnerHTML={{
-                    __html: highlightSearchTerm(transcriptData.transcript, searchTerm),
+                    __html: highlightSearchTerm(hearing.markdown_content || "No transcript content available", searchTerm),
                   }}
                 />
               </ScrollArea>
