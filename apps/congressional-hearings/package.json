@@ -18,7 +18,7 @@
     "convert-recent-hearings": "tsx scripts/convert-recent-hearings.ts",
     "import-gao-reports": "tsx scripts/import-gao-reports.ts",
     "update-gao-titles": "tsx scripts/update-gao-titles.ts",
-    "preview-gao-titles": "tsx scripts/update-gao-titles.ts preview",
+    "preview-gao-titles": "tsx scripts/update-gao-titles.ts preview"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
