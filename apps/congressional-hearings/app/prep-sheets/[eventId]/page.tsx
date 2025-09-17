@@ -11,7 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   FileText, Calendar, Building, Users, Target, AlertCircle,
   ChevronRight, Sparkles, BookOpen, MessageCircle, TrendingUp,
-  Shield, Gavel, Eye, Download, Share2, ArrowLeft
+  Shield, Gavel, Eye, Download, Share2, ArrowLeft, ExternalLink, Search
 } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
@@ -53,18 +53,37 @@ interface PrepSheet {
   confidence_score: number
 }
 
+interface GAOReportResult {
+  id: string;
+  score: number;
+  content: string;
+  title: string;
+  report_id: string;
+  date: string;
+  topics: string[];
+  snippet: string;
+}
+
 export default function PrepSheetView() {
   const params = useParams()
   const { toast } = useToast()
   const [prepSheet, setPrepSheet] = useState<PrepSheet | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("overview")
+  const [gaoReports, setGaoReports] = useState<GAOReportResult[]>([])
+  const [loadingGaoReports, setLoadingGaoReports] = useState(false)
 
   useEffect(() => {
     if (params.eventId) {
       fetchPrepSheet(params.eventId as string)
     }
   }, [params.eventId])
+
+  useEffect(() => {
+    if (prepSheet) {
+      searchRelevantGAOReports()
+    }
+  }, [prepSheet])
 
   const fetchPrepSheet = async (eventId: string) => {
     setLoading(true)
@@ -85,6 +104,52 @@ export default function PrepSheetView() {
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const searchRelevantGAOReports = async () => {
+    if (!prepSheet) return
+
+    setLoadingGaoReports(true)
+    try {
+      // Create search queries based on hearing content
+      const searchQueries = [
+        prepSheet.hearing_title,
+        prepSheet.committee_name,
+        prepSheet.executive_summary,
+        prepSheet.background_context
+      ].filter(Boolean)
+
+      // Extract key terms from key issues
+      if (prepSheet.key_issues?.primary_issues) {
+        prepSheet.key_issues.primary_issues.forEach((issue: any) => {
+          if (issue.issue) searchQueries.push(issue.issue)
+          if (issue.description) searchQueries.push(issue.description)
+        })
+      }
+
+      // Combine and search
+      const combinedQuery = searchQueries.slice(0, 3).join(' ')
+      
+      const response = await fetch('/api/search-gao', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: combinedQuery,
+          limit: 5,
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setGaoReports(data.results || [])
+      }
+    } catch (error) {
+      console.error('Error searching GAO reports:', error)
+    } finally {
+      setLoadingGaoReports(false)
     }
   }
 
@@ -185,12 +250,13 @@ export default function PrepSheetView() {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="witnesses">Witnesses</TabsTrigger>
           <TabsTrigger value="policy">Policy</TabsTrigger>
           <TabsTrigger value="members">Members</TabsTrigger>
           <TabsTrigger value="talking">Talking Points</TabsTrigger>
+          <TabsTrigger value="gao-reports">GAO Reports</TabsTrigger>
           <TabsTrigger value="resources">Resources</TabsTrigger>
         </TabsList>
 
@@ -254,6 +320,7 @@ export default function PrepSheetView() {
               </CardContent>
             </Card>
           )}
+
 
           {/* Controversy Analysis */}
           {prepSheet.controversy_points && (
@@ -542,6 +609,137 @@ export default function PrepSheetView() {
           )}
         </TabsContent>
 
+        <TabsContent value="gao-reports" className="space-y-6">
+          {/* Active Things to Consider - GAO Reports */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Search className="h-5 w-5 text-blue-500" />
+                Active Things to Consider
+                {loadingGaoReports && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                )}
+              </CardTitle>
+              <CardDescription>
+                Relevant GAO reports and findings that may inform your questions and positions
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loadingGaoReports ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="animate-pulse">
+                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-full mb-1"></div>
+                      <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : gaoReports.length > 0 ? (
+                <div className="space-y-4">
+                  {gaoReports.map((report, idx) => (
+                    <div key={report.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h4 className="font-semibold text-lg">{report.title}</h4>
+                            <Badge variant="secondary">{report.report_id}</Badge>
+                            <Badge variant="outline" className="text-xs">
+                              {(report.score * 100).toFixed(1)}% relevance
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground mb-2">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {new Date(report.date).toLocaleDateString()}
+                            </span>
+                            {report.topics && report.topics.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {report.topics.slice(0, 3).map((topic) => (
+                                  <Badge key={topic} variant="outline" className="text-xs">
+                                    {topic}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-blue-50 border border-blue-200 p-3 rounded-md mb-3">
+                        <p className="text-sm italic text-blue-800 mb-1">Key finding:</p>
+                        <p className="text-sm text-blue-900">{report.snippet}</p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/gao-reports/view/${report.report_id}`}>
+                            <FileText className="h-4 w-4 mr-1" />
+                            View Full Report
+                          </Link>
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={`/gao_reports/${report.report_id.toLowerCase()}.md`} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-4 w-4 mr-1" />
+                            Raw MD
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No relevant GAO reports found for this hearing.</p>
+                  <p className="text-sm">Try searching manually in the GAO Reports section.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Search Summary */}
+          {gaoReports.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Search Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-secondary/50 rounded-lg">
+                    <div className="text-2xl font-bold mb-1">{gaoReports.length}</div>
+                    <div className="text-sm font-medium">Reports Found</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Based on hearing content
+                    </div>
+                  </div>
+                  <div className="p-4 bg-secondary/50 rounded-lg">
+                    <div className="text-2xl font-bold mb-1">
+                      {gaoReports.length > 0 ? (gaoReports.reduce((sum, report) => sum + report.score, 0) / gaoReports.length * 100).toFixed(1) : 0}%
+                    </div>
+                    <div className="text-sm font-medium">Avg Relevance</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Semantic match score
+                    </div>
+                  </div>
+                  <div className="p-4 bg-secondary/50 rounded-lg">
+                    <div className="text-2xl font-bold mb-1">
+                      {new Set(gaoReports.flatMap(report => report.topics || [])).size}
+                    </div>
+                    <div className="text-sm font-medium">Unique Topics</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Across all reports
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
         <TabsContent value="resources" className="space-y-6">
           {prepSheet.related_bills && prepSheet.related_bills.length > 0 && (
             <Card>
@@ -566,10 +764,14 @@ export default function PrepSheetView() {
             </Card>
           )}
 
+          {/* Static GAO Reports (fallback) */}
           {prepSheet.gao_reports && prepSheet.gao_reports.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Relevant GAO Reports</CardTitle>
+                <CardTitle>Pre-configured GAO Reports</CardTitle>
+                <CardDescription>
+                  Manually curated reports for this hearing
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
