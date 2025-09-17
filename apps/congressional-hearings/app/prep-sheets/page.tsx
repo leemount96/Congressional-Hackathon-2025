@@ -352,14 +352,7 @@ export default function PrepSheets() {
                     </CardTitle>
                     <CardDescription className="text-sm">{sheet.committee_name}</CardDescription>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <Badge className={getChamberColor(sheet.chamber)}>{sheet.chamber}</Badge>
-                    {sheet.confidence_score && (
-                      <Badge className={getConfidenceColor(sheet.confidence_score)}>
-                        {Math.round(sheet.confidence_score * 100)}% confidence
-                      </Badge>
-                    )}
-                  </div>
+
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">

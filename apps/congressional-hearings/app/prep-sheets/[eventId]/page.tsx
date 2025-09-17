@@ -177,12 +177,7 @@ export default function PrepSheetView() {
                 <Eye className="h-3 w-3" />
                 {prepSheet.view_count} views
               </Badge>
-              {prepSheet.confidence_score && (
-                <Badge variant="default" className="flex items-center gap-1">
-                  <Sparkles className="h-3 w-3" />
-                  {Math.round(prepSheet.confidence_score * 100)}% confidence
-                </Badge>
-              )}
+
             </div>
           </CardHeader>
         </Card>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -11,6 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Calendar, Users, FileText, ExternalLink, ArrowLeft, Download, Quote, LinkIcon, Info, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { db, type CongressionalHearingMarkdown } from "@/lib/supabase"
+import { LabeledTranscriptViewer } from "@/components/labeled-transcript-viewer"
+import { TranscriptFilterPanel } from "@/components/transcript-filter-panel"
 
 // This will be populated from the database
 const mockTranscriptData = {
@@ -23,6 +25,8 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
   const [hearing, setHearing] = useState<CongressionalHearingMarkdown | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showAllSpeakers, setShowAllSpeakers] = useState(true)
+  const [selectedSpeaker, setSelectedSpeaker] = useState<string | null>(null)
 
   // Load hearing data from database
   useEffect(() => {
@@ -46,6 +50,32 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
     if (!term) return text
     const regex = new RegExp(`(${term})`, "gi")
     return text.replace(regex, '<mark class="bg-yellow-200">$1</mark>')
+  }
+
+  // Parse labeled transcript into segments
+  const segments = useMemo(() => {
+    if (!hearing?.markdown_content || hearing.content_source !== 'labeled_transcript') return []
+
+    const lines = hearing.markdown_content.split('\n')
+    const parsed: any[] = []
+
+    for (const line of lines) {
+      const match = line.match(/\[(\d{2}:\d{2}:\d{2}) - (\d{2}:\d{2}:\d{2})\] ([^(]+) \(([^)]+)\): (.*)/)
+      if (match) {
+        parsed.push({
+          timestamp: `${match[1]} - ${match[2]}`,
+          speaker: match[3].trim(),
+          role: match[4].trim(),
+          text: match[5].trim()
+        })
+      }
+    }
+    return parsed
+  }, [hearing?.markdown_content, hearing?.content_source])
+
+  const handleSpeakerFilterChange = (showAll: boolean, speaker: string | null) => {
+    setShowAllSpeakers(showAll)
+    setSelectedSpeaker(speaker)
   }
 
   const filteredCitations = mockTranscriptData.citations.filter(
@@ -154,12 +184,6 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
       </div>
 
       {/* Data source info */}
-      <Alert>
-        <Info className="h-4 w-4" />
-        <AlertDescription>
-          Showing real hearing content from your database. Citations and detailed analysis features are placeholders and will be enhanced in future updates.
-        </AlertDescription>
-      </Alert>
 
       {/* Header Info */}
       <Card>
@@ -177,10 +201,7 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
                     <FileText className="h-4 w-4" />
                     {hearing.word_count?.toLocaleString() || 0} words
                   </div>
-                  <div className="flex items-center gap-2">
-                    <ExternalLink className="h-4 w-4" />
-                    0 citations (placeholder)
-                  </div>
+
                 </div>
               </CardDescription>
             </div>
@@ -196,58 +217,44 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div>
-            <h4 className="text-sm font-medium mb-2">Witnesses:</h4>
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">
-                <Users className="mr-1 h-3 w-3" />
-                Witnesses to be extracted (placeholder)
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Citations Panel */}
+        {/* Filter Panel */}
         <div className="lg:col-span-1">
           <Card className="h-fit">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Quote className="h-5 w-5" />
-                Citations & References
-              </CardTitle>
-              <CardDescription>Documents and sources referenced in the hearing</CardDescription>
+              <CardTitle>Transcript Filters</CardTitle>
+              <CardDescription>Search and filter the hearing transcript</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <Input
-                  placeholder="Search citations..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full"
+              {hearing?.content_source === 'labeled_transcript' ? (
+                <TranscriptFilterPanel
+                  segments={segments}
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
+                  showAllSpeakers={showAllSpeakers}
+                  selectedSpeaker={selectedSpeaker}
+                  onSpeakerFilterChange={handleSpeakerFilterChange}
                 />
-
-                <ScrollArea className="h-96">
-                  <div className="space-y-3">
-                    <div className="p-3 border rounded-lg border-dashed">
-                      <div className="text-center space-y-2">
-                        <Quote className="h-8 w-8 text-muted-foreground mx-auto" />
-                        <p className="text-sm text-muted-foreground">
-                          Citation extraction coming soon
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          We'll automatically identify and link citations from the full transcript content
-                        </p>
-                        <Badge variant="outline" className="text-xs">
-                          Feature in development
-                        </Badge>
-                      </div>
+              ) : (
+                <div className="space-y-4">
+                  <Input
+                    placeholder="Search transcript..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full"
+                  />
+                  <div className="p-3 border rounded-lg border-dashed">
+                    <div className="text-center space-y-2">
+                      <FileText className="h-8 w-8 text-muted-foreground mx-auto" />
+                      <p className="text-sm text-muted-foreground">
+                        Advanced filtering available for labeled transcripts
+                      </p>
                     </div>
                   </div>
-                </ScrollArea>
-              </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -261,25 +268,30 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
                 Full Transcript
               </CardTitle>
               <div className="flex items-center gap-4">
-                <Input
-                  placeholder="Search transcript..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="max-w-sm"
-                />
                 <Badge variant="outline">{hearing.word_count?.toLocaleString() || 0} words</Badge>
                 <Badge variant="outline">Source: {hearing.content_source}</Badge>
               </div>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-96">
-                <div
-                  className="prose prose-sm max-w-none whitespace-pre-line"
-                  dangerouslySetInnerHTML={{
-                    __html: highlightSearchTerm(hearing.markdown_content || "No transcript content available", searchTerm),
-                  }}
-                />
-              </ScrollArea>
+              {hearing.content_source === 'labeled_transcript' ? (
+                <ScrollArea className="h-[600px]">
+                  <LabeledTranscriptViewer
+                    content={hearing.markdown_content || ""}
+                    searchTerm={searchTerm}
+                    showAllSpeakers={showAllSpeakers}
+                    selectedSpeaker={selectedSpeaker}
+                  />
+                </ScrollArea>
+              ) : (
+                <ScrollArea className="h-96">
+                  <div
+                    className="prose prose-sm max-w-none whitespace-pre-line"
+                    dangerouslySetInnerHTML={{
+                      __html: highlightSearchTerm(hearing.markdown_content || "No transcript content available", searchTerm),
+                    }}
+                  />
+                </ScrollArea>
+              )}
             </CardContent>
           </Card>
         </div>
