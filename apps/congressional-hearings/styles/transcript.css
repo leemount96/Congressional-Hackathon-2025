@@ -1,0 +1,288 @@
+/* Enhanced Transcript UI Styles */
+
+/* Smooth transitions for interactive elements */
+.transcript-segment {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover effects for transcript segments */
+.transcript-segment:hover {
+  transform: translateX(4px);
+}
+
+/* Search highlighting with animation */
+@keyframes highlight-pulse {
+  0% {
+    background-color: rgb(254, 240, 138);
+  }
+  50% {
+    background-color: rgb(253, 224, 71);
+  }
+  100% {
+    background-color: rgb(254, 240, 138);
+  }
+}
+
+mark {
+  animation: highlight-pulse 2s ease-in-out;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+/* Speaker role badges with subtle glow */
+.speaker-badge {
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.speaker-badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Timestamp links with underline animation */
+.timestamp-link {
+  position: relative;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.timestamp-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background-color: currentColor;
+  transition: width 0.3s ease;
+}
+
+.timestamp-link:hover::after {
+  width: 100%;
+}
+
+/* Filter panel improvements */
+.filter-panel {
+  background: linear-gradient(to bottom, 
+    var(--background) 0%, 
+    var(--muted) 100%
+  );
+}
+
+/* Quick filter buttons with ripple effect */
+.quick-filter-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.quick-filter-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s;
+}
+
+.quick-filter-btn:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Analytics progress bars with gradient */
+.progress-bar {
+  background: linear-gradient(90deg, 
+    hsl(var(--primary) / 0.8) 0%, 
+    hsl(var(--primary)) 100%
+  );
+  border-radius: 9999px;
+  transition: width 0.5s ease-out;
+}
+
+/* Sticky header with backdrop blur */
+.sticky-header {
+  backdrop-filter: blur(10px);
+  background-color: hsl(var(--background) / 0.95);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+/* Card hover effects */
+.stat-card {
+  transition: all 0.2s ease;
+  cursor: default;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 
+              0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+/* Smooth scrollbar styling */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .transcript-segment {
+    padding: 12px;
+    margin: 0 -8px;
+  }
+  
+  .transcript-segment:hover {
+    transform: none;
+    background-color: hsl(var(--muted) / 0.5);
+  }
+  
+  .speaker-badge {
+    font-size: 10px;
+  }
+}
+
+/* Dark mode enhancements */
+@media (prefers-color-scheme: dark) {
+  mark {
+    background-color: rgb(161, 98, 7);
+    color: rgb(254, 240, 138);
+  }
+  
+  .transcript-segment:hover {
+    background-color: hsl(var(--muted) / 0.3);
+  }
+  
+  .sticky-header {
+    background-color: hsl(var(--background) / 0.98);
+  }
+}
+
+/* Print styles */
+@media print {
+  .sticky-header,
+  .filter-panel,
+  .quick-stats,
+  button {
+    display: none !important;
+  }
+  
+  .transcript-segment {
+    page-break-inside: avoid;
+    border-bottom: 1px solid #e5e5e5;
+    padding: 10px 0;
+  }
+  
+  mark {
+    background-color: yellow !important;
+    color: black !important;
+  }
+}
+
+/* Loading skeleton animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.skeleton-loader {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 0px,
+    hsl(var(--muted) / 0.5) 40px,
+    hsl(var(--muted)) 80px
+  );
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Focus styles for accessibility */
+.focus-visible:focus {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* Tooltip animations */
+.tooltip-content {
+  animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Interactive button states */
+.interactive-btn {
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.interactive-btn:hover {
+  transform: translateY(-1px);
+}
+
+.interactive-btn:active {
+  transform: translateY(0);
+}
+
+/* Copy success animation */
+@keyframes copy-success {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.copy-success {
+  animation: copy-success 0.3s ease-in-out;
+}
+
+/* Enhanced search input */
+.search-input-enhanced {
+  transition: all 0.2s ease;
+}
+
+.search-input-enhanced:focus {
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+}
+
+/* Responsive typography */
+.responsive-text {
+  font-size: clamp(0.875rem, 2vw, 1rem);
+  line-height: clamp(1.25rem, 3vw, 1.5rem);
+}
