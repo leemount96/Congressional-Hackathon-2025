@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -89,13 +89,26 @@ export default function SearchPage() {
   const [selectedCommittees, setSelectedCommittees] = useState<string[]>([])
   const [selectedTypes, setSelectedTypes] = useState<string[]>([])
   const [sortBy, setSortBy] = useState("relevance")
+  const [committees, setCommittees] = useState<string[]>([])
+  const [loadingCommittees, setLoadingCommittees] = useState(true)
 
-  const committees = [
-    "House Committee on Energy and Commerce",
-    "Senate Committee on Banking, Housing, and Urban Affairs",
-    "House Committee on Science, Space, and Technology",
-    "Senate Committee on Health, Education, Labor and Pensions",
-  ]
+  // Load committees from API
+  useEffect(() => {
+    async function loadCommittees() {
+      try {
+        const response = await fetch('/api/committees')
+        if (response.ok) {
+          const data = await response.json()
+          setCommittees(data.committees || [])
+        }
+      } catch (error) {
+        console.error('Error loading committees:', error)
+      } finally {
+        setLoadingCommittees(false)
+      }
+    }
+    loadCommittees()
+  }, [])
 
   const documentTypes = ["GAO Reports", "CRS Reports", "Other Documents"]
 

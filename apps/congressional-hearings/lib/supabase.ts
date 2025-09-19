@@ -182,6 +182,21 @@ export const db = {
     
     if (error) throw error
     return data as CongressionalHearingMarkdown[]
+  },
+
+  // Get unique committees from all hearings
+  async getUniqueCommittees() {
+    const { data, error } = await supabase
+      .from('congressional_hearings_markdown')
+      .select('committee')
+      .not('committee', 'is', null)
+      .order('committee')
+    
+    if (error) throw error
+    
+    // Extract unique committees
+    const uniqueCommittees = [...new Set(data.map(item => item.committee))].filter(Boolean).sort()
+    return uniqueCommittees
   }
 }
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -57,17 +57,10 @@ const prepSheetTemplates = [
   },
 ]
 
-const committees = [
-  "House Committee on Science, Space, and Technology",
-  "Senate Committee on Banking, Housing, and Urban Affairs",
-  "House Committee on Agriculture",
-  "Senate Committee on Health, Education, Labor and Pensions",
-  "House Committee on Energy and Commerce",
-  "Senate Committee on Judiciary",
-]
-
 export default function NewPrepSheet() {
   const [selectedTemplate, setSelectedTemplate] = useState("")
+  const [committees, setCommittees] = useState<string[]>([])
+  const [loadingCommittees, setLoadingCommittees] = useState(true)
   const [formData, setFormData] = useState({
     title: "",
     hearingTitle: "",
@@ -77,6 +70,24 @@ export default function NewPrepSheet() {
     assignedTo: "",
     priority: "medium",
   })
+
+  // Load committees from API
+  useEffect(() => {
+    async function loadCommittees() {
+      try {
+        const response = await fetch('/api/committees')
+        if (response.ok) {
+          const data = await response.json()
+          setCommittees(data.committees || [])
+        }
+      } catch (error) {
+        console.error('Error loading committees:', error)
+      } finally {
+        setLoadingCommittees(false)
+      }
+    }
+    loadCommittees()
+  }, [])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))

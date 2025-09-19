@@ -8,38 +8,39 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Archive, Calendar, FileText, Users, ExternalLink, Download, Search, Filter, Info } from "lucide-react"
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { 
+  Archive, 
+  Calendar, 
+  FileText, 
+  Search, 
+  Filter, 
+  ChevronLeft, 
+  ChevronRight, 
+  ChevronsLeft, 
+  ChevronsRight
+} from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { db, transformMarkdownHearingForDisplay, type CongressionalHearingMarkdown } from "@/lib/supabase"
 
-// This will be populated from the database
-const historicalHearings: any[] = []
-
-const committees = [
-  "All Committees",
-  "House Committee on Energy and Commerce",
-  "Senate Committee on Banking, Housing, and Urban Affairs",
-  "House Committee on Science, Space, and Technology",
-  "Senate Committee on Health, Education, Labor and Pensions",
-  "House Committee on Homeland Security",
-]
-
-const topics = [
-  "All Topics",
-  "AI",
-  "Climate Change",
-  "Cybersecurity",
-  "Education",
-  "Energy",
-  "Healthcare",
-  "Infrastructure",
-  "Monetary Policy",
-  "National Security",
-  "Privacy",
-  "Social Media",
-]
+const ITEMS_PER_PAGE = 10
 
 export default function HistoricalHearings() {
+  const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCommittee, setSelectedCommittee] = useState("All Committees")
   const [selectedTopic, setSelectedTopic] = useState("All Topics")
@@ -47,6 +48,9 @@ export default function HistoricalHearings() {
   const [hearings, setHearings] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [committees, setCommittees] = useState<string[]>(["All Committees"])
+  const [topics, setTopics] = useState<string[]>(["All Topics"])
+  const [currentPage, setCurrentPage] = useState(1)
 
   // Load hearings from database
   useEffect(() => {
@@ -57,6 +61,34 @@ export default function HistoricalHearings() {
         const markdownHearings = await db.getAllMarkdownHearings()
         const transformedHearings = markdownHearings.map(transformMarkdownHearingForDisplay)
         setHearings(transformedHearings)
+        
+        // Extract unique committees from the hearings data
+        const uniqueCommittees = new Set<string>()
+        const uniqueTopics = new Set<string>()
+        
+        transformedHearings.forEach(hearing => {
+          if (hearing.committee) {
+            uniqueCommittees.add(hearing.committee)
+          }
+          if (hearing.topics && Array.isArray(hearing.topics)) {
+            hearing.topics.forEach((topic: string) => {
+              // Filter out placeholder topics
+              if (topic && topic !== "Topics to be extracted from content") {
+                uniqueTopics.add(topic)
+              }
+            })
+          }
+        })
+        
+        // Sort and set committees
+        const sortedCommittees = Array.from(uniqueCommittees).sort()
+        setCommittees(["All Committees", ...sortedCommittees])
+        
+        // Sort and set topics (only if we have real topics)
+        const sortedTopics = Array.from(uniqueTopics).sort()
+        if (sortedTopics.length > 0) {
+          setTopics(["All Topics", ...sortedTopics])
+        }
       } catch (err) {
         console.error('Error loading hearings:', err)
         setError(err instanceof Error ? err.message : 'Failed to load hearings')
@@ -66,6 +98,11 @@ export default function HistoricalHearings() {
     }
     loadHearings()
   }, [])
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, selectedCommittee, selectedTopic, dateRange])
 
   const filteredHearings = hearings.filter((hearing) => {
     const matchesSearch =
@@ -87,17 +124,37 @@ export default function HistoricalHearings() {
     return matchesSearch && matchesCommittee && matchesTopic && matchesDate
   })
 
-  const getTranscriptStatusColor = (status: string) => {
-    switch (status) {
-      case "available":
-        return "bg-green-100 text-green-800 border-green-200"
-      case "processing":
-        return "bg-orange-100 text-orange-800 border-orange-200"
-      case "unavailable":
-        return "bg-red-100 text-red-800 border-red-200"
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200"
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredHearings.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  const currentHearings = filteredHearings.slice(startIndex, endIndex)
+
+  const getPageNumbers = () => {
+    const delta = 2
+    const range = []
+    const rangeWithDots = []
+    let l
+
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= currentPage - delta && i <= currentPage + delta)) {
+        range.push(i)
+      }
     }
+
+    range.forEach((i) => {
+      if (l) {
+        if (i - l === 2) {
+          rangeWithDots.push(l + 1)
+        } else if (i - l !== 1) {
+          rangeWithDots.push('...')
+        }
+      }
+      rangeWithDots.push(i)
+      l = i
+    })
+
+    return rangeWithDots
   }
 
   return (
@@ -117,14 +174,6 @@ export default function HistoricalHearings() {
         </div>
       </div>
 
-      {/* Data source info */}
-      <Alert>
-        <Info className="h-4 w-4" />
-        <AlertDescription>
-          Showing {hearings.length} hearings from your database. Some fields (witnesses, topics, detailed summaries) are placeholders and will be enhanced in future updates.
-        </AlertDescription>
-      </Alert>
-
       {error && (
         <Alert variant="destructive">
           <AlertDescription>
@@ -132,54 +181,6 @@ export default function HistoricalHearings() {
           </AlertDescription>
         </Alert>
       )}
-
-      {/* Stats Overview */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Hearings</CardTitle>
-            <Archive className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{loading ? "..." : hearings.length}</div>
-            <p className="text-xs text-muted-foreground">In database</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Transcripts Available</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{loading ? "..." : hearings.length}</div>
-            <p className="text-xs text-muted-foreground">100% coverage</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Words</CardTitle>
-            <ExternalLink className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {loading ? "..." : hearings.reduce((sum, h) => sum + (h.wordCount || 0), 0).toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground">Full content</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Content Sources</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {loading ? "..." : new Set(hearings.map(h => h.contentSource)).size}
-            </div>
-            <p className="text-xs text-muted-foreground">PDF, govinfo, etc.</p>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Filters */}
       <Card>
@@ -259,132 +260,192 @@ export default function HistoricalHearings() {
               </Button>
             </div>
           </div>
+          
+          {/* Results count */}
+          {!loading && (
+            <div className="mt-4 text-sm text-muted-foreground">
+              {filteredHearings.length === 0 
+                ? "No results found" 
+                : `${filteredHearings.length} result${filteredHearings.length !== 1 ? 's' : ''} found`}
+              {filteredHearings.length > ITEMS_PER_PAGE && 
+                ` • Showing ${startIndex + 1}-${Math.min(endIndex, filteredHearings.length)} of ${filteredHearings.length}`}
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Hearings List */}
-      <div className="space-y-4">
-        {loading ? (
-          // Loading skeletons
-          Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-6 w-3/4 mb-2" />
-                <Skeleton className="h-4 w-1/2 mb-2" />
-                <Skeleton className="h-4 w-full" />
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-4">
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-4 w-16" />
-                  <Skeleton className="h-4 w-18" />
-                  <Skeleton className="h-4 w-20" />
+      {/* Table View */}
+      <Card>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="p-6">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center space-x-4 mb-4">
+                  <Skeleton className="h-12 w-12" />
+                  <div className="space-y-2 flex-1">
+                    <Skeleton className="h-4 w-[250px]" />
+                    <Skeleton className="h-4 w-[200px]" />
+                  </div>
                 </div>
-                <Skeleton className="h-8 w-full" />
-              </CardContent>
-            </Card>
-          ))
-        ) : filteredHearings.map((hearing) => (
-          <Card key={hearing.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <CardTitle className="text-xl text-balance">{hearing.title}</CardTitle>
-                  <CardDescription>{hearing.committee}</CardDescription>
+              ))}
+            </div>
+          ) : filteredHearings.length === 0 ? (
+            <div className="text-center py-12">
+              <Archive className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium mb-2">No hearings found</h3>
+              <p className="text-muted-foreground">Try adjusting your filters or search terms.</p>
+            </div>
+          ) : (
+            <TooltipProvider delayDuration={300}>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[100px]">Date</TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Committee</TableHead>
+                    <TableHead className="text-center">Pages</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {currentHearings.map((hearing) => (
+                    <TableRow 
+                      key={hearing.id} 
+                      className="group cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => router.push(`/historical/${hearing.id}/transcript`)}
+                    >
+                      <TableCell className="font-medium">
+                        {new Date(hearing.date).toLocaleDateString('en-US', { 
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-[400px]">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <p className="font-medium text-sm truncate">
+                                {hearing.title}
+                              </p>
+                            </TooltipTrigger>
+                            <TooltipContent 
+                              side="top" 
+                              align="start"
+                              className="max-w-[500px] text-wrap"
+                              onPointerDownOutside={(e) => e.preventDefault()}
+                            >
+                              {hearing.title}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-[200px]">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <p className="text-sm text-muted-foreground truncate">
+                                {hearing.committee}
+                              </p>
+                            </TooltipTrigger>
+                            <TooltipContent 
+                              side="top"
+                              align="start"
+                              className="max-w-[400px] text-wrap"
+                              onPointerDownOutside={(e) => e.preventDefault()}
+                            >
+                              {hearing.committee}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className="text-sm text-muted-foreground">
+                          {hearing.pages}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={hearing.transcriptStatus === "available" ? "default" : "secondary"}
+                          className="text-xs"
+                        >
+                          {hearing.transcriptStatus}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-6 py-4 border-t">
                   <p className="text-sm text-muted-foreground">
-                    {hearing.summary}
-                    {hearing.summary === "Summary to be extracted from markdown content" && (
-                      <Badge variant="outline" className="ml-2 text-xs">
-                        Placeholder
-                      </Badge>
-                    )}
+                    Page {currentPage} of {totalPages}
                   </p>
-                </div>
-                <Badge className={getTranscriptStatusColor(hearing.transcriptStatus)}>{hearing.transcriptStatus}</Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-4">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{new Date(hearing.date).toLocaleDateString()}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{hearing.pages} pages</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{hearing.citations} citations</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{hearing.witnesses.length} witnesses</span>
-                </div>
-              </div>
-
-              {/* Topics */}
-              <div className="mb-4">
-                <div className="flex flex-wrap gap-2">
-                  {hearing.topics.map((topic, index) => (
-                    <Badge key={index} variant="secondary">
-                      {topic}
-                      {topic === "Topics to be extracted from content" && (
-                        <span className="ml-1 text-xs opacity-60">(placeholder)</span>
-                      )}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              {/* Witnesses */}
-              <div className="mb-4">
-                <h4 className="text-sm font-medium mb-2">Witnesses:</h4>
-                <div className="flex flex-wrap gap-2">
-                  {hearing.witnesses.map((witness, index) => (
-                    <Badge key={index} variant="outline">
-                      {witness}
-                      {witness === "Witness information not yet extracted" && (
-                        <span className="ml-1 text-xs opacity-60">(placeholder)</span>
-                      )}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-4 border-t">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-muted-foreground">{hearing.relatedDocs} related documents</div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      <Download className="mr-1 h-3 w-3" />
-                      Download
+                  
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                      className="h-8 w-8"
+                    >
+                      <ChevronsLeft className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/historical/${hearing.id}/documents`}>View Documents</Link>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="h-8 w-8"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <Button size="sm" asChild>
-                      <Link href={`/historical/${hearing.id}/transcript`}>
-                        {hearing.transcriptStatus === "available" ? "View Transcript" : "Check Status"}
-                      </Link>
+                    
+                    {getPageNumbers().map((page, index) => (
+                      <div key={index}>
+                        {page === '...' ? (
+                          <span className="px-3 py-1">...</span>
+                        ) : (
+                          <Button
+                            variant={currentPage === page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentPage(page as number)}
+                            className="h-8 w-8 p-0"
+                          >
+                            {page}
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                    
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="h-8 w-8"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={currentPage === totalPages}
+                      className="h-8 w-8"
+                    >
+                      <ChevronsRight className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {!loading && filteredHearings.length === 0 && (
-        <Card>
-          <CardContent className="text-center py-8">
-            <Archive className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">No hearings found</h3>
-            <p className="text-muted-foreground">Try adjusting your filters or search terms.</p>
-          </CardContent>
-        </Card>
-      )}
+              )}
+            </TooltipProvider>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
