@@ -8,22 +8,16 @@ import { Calendar, FileText, Search, Archive, Settings, BookOpen } from "lucide-
 
 const navigation = [
   {
-    name: "Upcoming Hearings",
-    href: "/",
+    name: "Hearings",
+    href: "/hearings",
     icon: Calendar,
-    description: "Prepare for upcoming committee hearings",
+    description: "Browse upcoming meetings and historical transcripts",
   },
   {
     name: "Prep Sheets",
     href: "/prep-sheets",
     icon: FileText,
     description: "Create and manage preparation documents",
-  },
-  {
-    name: "Hearing Transcripts",
-    href: "/historical",
-    icon: Archive,
-    description: "Browse and analyze past hearings",
   },
   {
     name: "GAO Reports",
@@ -39,7 +33,7 @@ export function Navigation() {
   return (
     <nav className="flex h-16 items-center justify-between border-b bg-card px-6">
       <div className="flex items-center space-x-8">
-        <Link href="/" className="flex items-center space-x-2">
+        <Link href="/hearings" className="flex items-center space-x-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <FileText className="h-4 w-4" />
           </div>

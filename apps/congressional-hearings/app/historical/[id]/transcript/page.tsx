@@ -126,7 +126,7 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
       <div className="space-y-6">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/historical">
+            <Link href="/hearings?type=historical">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Historical Hearings
             </Link>
@@ -167,7 +167,7 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
       <div className="space-y-6">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/historical">
+            <Link href="/hearings?type=historical">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Historical Hearings
             </Link>
@@ -188,7 +188,7 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
       <div className="space-y-6">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/historical">
+            <Link href="/hearings?type=historical">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Historical Hearings
             </Link>

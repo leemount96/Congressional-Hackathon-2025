@@ -260,7 +260,7 @@ export default function PrepSheets() {
             Refresh
           </Button>
           <Button asChild>
-            <Link href="/upcoming">
+            <Link href="/hearings?type=upcoming">
               <Calendar className="mr-2 h-4 w-4" />
               View Hearings
             </Link>
