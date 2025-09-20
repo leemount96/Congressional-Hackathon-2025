@@ -244,18 +244,6 @@ export default function TranscriptViewV2({ params }: { params: { id: string } })
       </header>
 
       <div className="container mx-auto px-4 py-6">
-        {/* Info Alert */}
-        {hearing.content_source && (
-          <Alert className="mb-6">
-            <Info className="h-4 w-4" />
-            <AlertTitle>Data Source</AlertTitle>
-            <AlertDescription>
-              This transcript is sourced from {hearing.content_source.replace('_', ' ')} 
-              {hearing.word_count && ` • ${hearing.word_count.toLocaleString()} words`}
-            </AlertDescription>
-          </Alert>
-        )}
-
         {/* Quick Stats Bar */}
         {segments.length > 0 && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -351,17 +339,12 @@ export default function TranscriptViewV2({ params }: { params: { id: string } })
                     <FileText className="h-5 w-5" />
                     Transcript
                   </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">
-                      {hearing.content_source?.replace('_', ' ')}
+                  {hearing.ai_summary_generated && (
+                    <Badge variant="secondary" className="text-xs">
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      AI Enhanced
                     </Badge>
-                    {hearing.ai_summary_generated && (
-                      <Badge variant="secondary" className="text-xs">
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        AI Enhanced
-                      </Badge>
-                    )}
-                  </div>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="p-0">

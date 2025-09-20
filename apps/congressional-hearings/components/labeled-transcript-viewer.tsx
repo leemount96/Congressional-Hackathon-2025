@@ -3,6 +3,7 @@
 import { useMemo } from "react"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { ExpandableTranscriptSegment } from "@/components/expandable-transcript-segment"
 
 interface TranscriptSegment {
   timestamp: string
@@ -89,40 +90,62 @@ export function LabeledTranscriptViewer({
     return text.replace(regex, '<mark class="bg-yellow-200 font-semibold px-0.5">$1</mark>')
   }
 
+  // Check if we're filtering by speaker
+  const isFilteringBySpeaker = !showAllSpeakers && selectedSpeaker
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      {filteredSegments.map((segment, index) => (
-        <div key={index} className="group">
-          {/* Speaker Header */}
-          <div className="flex items-baseline gap-2 mb-2">
-            <span className={cn("font-semibold", getSpeakerTextColor(segment.role))}>
-              {segment.speaker}
-            </span>
-            <Badge
-              variant="outline"
-              className={cn("text-xs px-1.5 py-0", getSpeakerColor(segment.role))}
-            >
-              {segment.role}
-            </Badge>
-            <span className="text-xs text-muted-foreground">
-              ({segment.timestamp})
-            </span>
+      {isFilteringBySpeaker ? (
+        // Use expandable segments when filtering by speaker - click to open dialog with context
+        <>
+          <div className="text-sm text-muted-foreground mb-4">
+            💡 Click on any segment to view it with surrounding context
           </div>
+          {filteredSegments.map((segment, index) => (
+            <ExpandableTranscriptSegment
+              key={index}
+              segment={{ ...segment, index: segments.indexOf(segment) }}
+              allSegments={segments}
+              searchTerm={searchTerm}
+              onTimestampClick={(timestamp) => console.log('Timestamp clicked:', timestamp)}
+            />
+          ))}
+        </>
+      ) : (
+        // Default view for all speakers
+        filteredSegments.map((segment, index) => (
+          <div key={index} className="group">
+            {/* Speaker Header */}
+            <div className="flex items-baseline gap-2 mb-2">
+              <span className={cn("font-semibold", getSpeakerTextColor(segment.role))}>
+                {segment.speaker}
+              </span>
+              <Badge
+                variant="outline"
+                className={cn("text-xs px-1.5 py-0", getSpeakerColor(segment.role))}
+              >
+                {segment.role}
+              </Badge>
+              <span className="text-xs text-muted-foreground">
+                ({segment.timestamp})
+              </span>
+            </div>
 
-          {/* Text Content */}
-          <div
-            className="text-sm leading-relaxed text-gray-700 dark:text-gray-300 pl-0 mb-4"
-            dangerouslySetInnerHTML={{
-              __html: highlightSearchTerm(segment.text)
-            }}
-          />
+            {/* Text Content */}
+            <div
+              className="text-sm leading-relaxed text-gray-700 dark:text-gray-300 pl-0 mb-4"
+              dangerouslySetInnerHTML={{
+                __html: highlightSearchTerm(segment.text)
+              }}
+            />
 
-          {/* Separator between speakers */}
-          {index < filteredSegments.length - 1 && (
-            <div className="border-b border-gray-100 dark:border-gray-800" />
-          )}
-        </div>
-      ))}
+            {/* Separator between speakers */}
+            {index < filteredSegments.length - 1 && (
+              <div className="border-b border-gray-100 dark:border-gray-800" />
+            )}
+          </div>
+        ))
+      )}
 
       {filteredSegments.length === 0 && (
         <div className="text-center py-12">

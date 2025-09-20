@@ -230,16 +230,9 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
             <div>
               <CardTitle className="text-xl">{hearing.committee || "Committee information not available"}</CardTitle>
               <CardDescription className="mt-2">
-                <div className="flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    {new Date(hearing.date).toLocaleDateString()}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    {hearing.word_count?.toLocaleString() || 0} words
-                  </div>
-
+                <div className="flex items-center gap-2 text-sm">
+                  <Calendar className="h-4 w-4" />
+                  {new Date(hearing.date).toLocaleDateString()}
                 </div>
               </CardDescription>
             </div>
@@ -305,10 +298,6 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
                 <FileText className="h-5 w-5" />
                 Full Transcript
               </CardTitle>
-              <div className="flex items-center gap-4">
-                <Badge variant="outline">{hearing.word_count?.toLocaleString() || 0} words</Badge>
-                <Badge variant="outline">Source: {hearing.content_source}</Badge>
-              </div>
             </CardHeader>
             <CardContent>
               <Alert className="mb-4 border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20">
