@@ -32,6 +32,7 @@ import {
   ChevronsRight
 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { CondensedFilterBar } from "@/components/condensed-filter-bar"
 
 interface Hearing {
   id: number

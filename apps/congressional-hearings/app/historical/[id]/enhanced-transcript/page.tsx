@@ -195,14 +195,14 @@ export default function EnhancedTranscriptPage({ params }: { params: { id: strin
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-1">
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/hearings?type=historical">
+                <Link href="/historical">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back
                 </Link>
               </Button>
-              <div className="hidden md:block">
+              <div className="flex-1">
                 <h1 className="text-xl font-bold line-clamp-1">{hearing.title}</h1>
                 <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
                   <div className="flex items-center gap-1">
@@ -267,11 +267,6 @@ export default function EnhancedTranscriptPage({ params }: { params: { id: strin
                 </SheetContent>
               </Sheet>
             </div>
-          </div>
-          
-          {/* Mobile title */}
-          <div className="md:hidden mt-3">
-            <h1 className="text-lg font-bold line-clamp-2">{hearing.title}</h1>
           </div>
         </div>
       </header>
@@ -412,6 +407,17 @@ export default function EnhancedTranscriptPage({ params }: { params: { id: strin
               </CardHeader>
               
               <CardContent className="p-0">
+                {activeView === "transcript" && (
+                  <Alert className="m-4 mb-0 border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20">
+                    <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+                    <AlertTitle className="text-amber-800 dark:text-amber-500">Unofficial Transcript</AlertTitle>
+                    <AlertDescription className="text-amber-700 dark:text-amber-400">
+                      This is an automatically generated transcript created near-instantly at the conclusion of the hearing. 
+                      It may contain errors, inaccuracies, or misattributions. For official records, please refer to the 
+                      authoritative sources published by the respective Congressional committee.
+                    </AlertDescription>
+                  </Alert>
+                )}
                 <ScrollArea className="h-[calc(100vh-22rem)]">
                   {activeView === "transcript" && (
                     <div className="p-6">

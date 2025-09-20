@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Calendar, Users, FileText, ExternalLink, ArrowLeft, Download, Quote, LinkIcon, Info, AlertCircle } from "lucide-react"
 import Link from "next/link"
@@ -128,7 +128,7 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
           <Button variant="ghost" size="sm" asChild>
             <Link href="/hearings?type=historical">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Historical Hearings
+              Back
             </Link>
           </Button>
           <div>
@@ -169,7 +169,7 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
           <Button variant="ghost" size="sm" asChild>
             <Link href="/hearings?type=historical">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Historical Hearings
+              Back
             </Link>
           </Button>
         </div>
@@ -190,7 +190,7 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
           <Button variant="ghost" size="sm" asChild>
             <Link href="/hearings?type=historical">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Historical Hearings
+              Back
             </Link>
           </Button>
         </div>
@@ -206,16 +206,18 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/historical">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Historical Hearings
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold text-balance">{hearing.title}</h1>
-          <p className="text-muted-foreground mt-2">Transcript and Citation Analysis</p>
+      <div className="space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/historical">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Link>
+          </Button>
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-balance">{hearing.title}</h1>
+            <p className="text-muted-foreground mt-2">Transcript and Citation Analysis</p>
+          </div>
         </div>
       </div>
 
@@ -309,6 +311,15 @@ export default function TranscriptView({ params }: { params: { id: string } }) {
               </div>
             </CardHeader>
             <CardContent>
+              <Alert className="mb-4 border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20">
+                <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+                <AlertTitle className="text-amber-800 dark:text-amber-500">Unofficial Transcript</AlertTitle>
+                <AlertDescription className="text-amber-700 dark:text-amber-400">
+                  This is an automatically generated transcript created near-instantly at the conclusion of the hearing. 
+                  It may contain errors, inaccuracies, or misattributions. For official records, please refer to the 
+                  authoritative sources published by the respective Congressional committee.
+                </AlertDescription>
+              </Alert>
               {hearing.content_source === 'labeled_transcript' ? (
                 // Labeled transcript with speaker parsing
                 <ScrollArea className="h-[600px]">
